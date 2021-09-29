@@ -1,27 +1,27 @@
 {
   "files": {
     "main.css": "/Oroucle/static/css/main.5ea573ed.chunk.css",
-    "main.js": "/Oroucle/static/js/main.e47479a8.chunk.js",
-    "main.js.map": "/Oroucle/static/js/main.e47479a8.chunk.js.map",
+    "main.js": "/Oroucle/static/js/main.6bf29dc5.chunk.js",
+    "main.js.map": "/Oroucle/static/js/main.6bf29dc5.chunk.js.map",
     "runtime-main.js": "/Oroucle/static/js/runtime-main.b9deddf0.js",
     "runtime-main.js.map": "/Oroucle/static/js/runtime-main.b9deddf0.js.map",
     "static/css/2.95923090.chunk.css": "/Oroucle/static/css/2.95923090.chunk.css",
-    "static/js/2.a20d39ff.chunk.js": "/Oroucle/static/js/2.a20d39ff.chunk.js",
-    "static/js/2.a20d39ff.chunk.js.map": "/Oroucle/static/js/2.a20d39ff.chunk.js.map",
+    "static/js/2.e8ac8c2d.chunk.js": "/Oroucle/static/js/2.e8ac8c2d.chunk.js",
+    "static/js/2.e8ac8c2d.chunk.js.map": "/Oroucle/static/js/2.e8ac8c2d.chunk.js.map",
     "static/js/3.e4ffb45d.chunk.js": "/Oroucle/static/js/3.e4ffb45d.chunk.js",
     "static/js/3.e4ffb45d.chunk.js.map": "/Oroucle/static/js/3.e4ffb45d.chunk.js.map",
     "index.html": "/Oroucle/index.html",
     "static/css/2.95923090.chunk.css.map": "/Oroucle/static/css/2.95923090.chunk.css.map",
     "static/css/main.5ea573ed.chunk.css.map": "/Oroucle/static/css/main.5ea573ed.chunk.css.map",
-    "static/js/2.a20d39ff.chunk.js.LICENSE.txt": "/Oroucle/static/js/2.a20d39ff.chunk.js.LICENSE.txt",
+    "static/js/2.e8ac8c2d.chunk.js.LICENSE.txt": "/Oroucle/static/js/2.e8ac8c2d.chunk.js.LICENSE.txt",
     "static/media/index.css": "/Oroucle/static/media/sora-latin-ext-400-normal.b6e3517b.woff2",
     "static/media/wallet.c746d144.less": "/Oroucle/static/media/wallet.c746d144.less"
   },
   "entrypoints": [
     "static/js/runtime-main.b9deddf0.js",
     "static/css/2.95923090.chunk.css",
-    "static/js/2.a20d39ff.chunk.js",
+    "static/js/2.e8ac8c2d.chunk.js",
     "static/css/main.5ea573ed.chunk.css",
-    "static/js/main.e47479a8.chunk.js"
+    "static/js/main.6bf29dc5.chunk.js"
   ]
 }
