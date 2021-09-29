@@ -2,7 +2,7 @@ import { deserializeUnchecked } from 'borsh';
 import {
   Honeypot,
   RNG,
-  RouletteBet,
+  RouletteGuess,
 } from './state'
 
 import { schema } from './schema'
@@ -15,6 +15,6 @@ export const decodeHoneypot = (buffer: Buffer) => {
   return deserializeUnchecked(schema, Honeypot, buffer) as Honeypot;
 };
 
-export const decodeRouletteBet = (buffer: Buffer) => {
-  return deserializeUnchecked(schema, RouletteBet, buffer) as RouletteBet;
+export const decodeRouletteGuess = (buffer: Buffer) => {
+  return deserializeUnchecked(schema, RouletteGuess, buffer) as RouletteGuess;
 };

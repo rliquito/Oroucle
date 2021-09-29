@@ -1,3 +1,4 @@
+use crate::validation_utils::assert_keys_equal;
 use {
     solana_program::{
         account_info::AccountInfo,
@@ -5,7 +6,7 @@ use {
         msg,
         program::{invoke, invoke_signed},
         pubkey::Pubkey,
-        system_instruction,
+        system_instruction, system_program, sysvar,
         sysvar::{rent::Rent, Sysvar},
     },
     std::convert::TryInto,
@@ -79,6 +80,8 @@ pub fn create_or_allocate_account_raw<'a>(
     size: usize,
     seeds: &[&[u8]],
 ) -> ProgramResult {
+    assert_keys_equal(*system_program_info.key, system_program::id())?;
+    assert_keys_equal(*rent_sysvar_info.key, sysvar::rent::id())?;
     topup(
         new_account_info,
         rent_sysvar_info,

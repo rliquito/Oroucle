@@ -1,58 +1,130 @@
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone, PartialEq, Copy)]
-pub enum Bet {
-    Zero,
-    DoubleZero,
-    R1,
-    B2,
-    R3,
-    B4,
-    R5,
-    B6,
-    R7,
-    B8,
-    R9,
-    B10,
-    B11,
-    R12,
-    B13,
-    R14,
-    B15,
-    R16,
-    B17,
-    R18,
-    R19,
-    B20,
-    R21,
-    B22,
-    R23,
-    B24,
-    R25,
-    B26,
-    R27,
-    B28,
-    B29,
-    R30,
-    B31,
-    R32,
-    B33,
-    R34,
-    B35,
-    R36,
-    Red,
-    Black,
-    Even,
-    Odd,
-    Col1,
-    Col2,
-    Col3,
-    Dozen1,
-    Dozen2,
-    Dozen3,
-    Low,
-    High,
+pub enum Version {
+    Uninitalized,
+    Tombstone,
+    RNGV1,
+    HoneypotV1,
+    LockedGuessV1,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
+pub struct RNG {
+    pub version: Version,
+    pub value: u64,
+    pub slot: u64,
+}
+
+impl RNG {
+    pub const LEN: i64 = 1 + 8 + 8;
+
+    pub fn from_account_info(a: &AccountInfo) -> Result<RNG, ProgramError> {
+        let rng = RNG::try_from_slice(&a.data.borrow())?;
+        Ok(rng)
+    }
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
+pub struct Honeypot {
+    pub version: Version,
+    pub honeypot_bump_seed: u8,
+    pub vault_bump_seed: u8,
+    pub owner: Pubkey,
+    pub mint: Pubkey,
+    pub tick_size: u64,
+    pub max_amount: u64,
+    pub minimum_bank_size: u64,
+}
+
+impl Honeypot {
+    pub const LEN: i64 = 1 + 1 + 1 + 32 + 32 + 8 + 8 + 8;
+
+    pub fn from_account_info(a: &AccountInfo) -> Result<Honeypot, ProgramError> {
+        let hp = Honeypot::try_from_slice(&a.data.borrow())?;
+        Ok(hp)
+    }
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
+pub struct LockedGuess {
+    pub version: Version,
+    pub bump_seed: u8,
+    pub owner: Pubkey,
+    pub vault: Pubkey,
+    pub slot: u64,
+    pub active: bool,
+    pub active_size: u64,
+    pub guesses: [u64; 64],
+}
+
+impl LockedGuess {
+    pub const LEN: i64 = 1 + 1 + 32 + 32 + 8 + 1 + 8 + 8 * 64;
+
+    pub fn from_account_info(a: &AccountInfo) -> Result<LockedGuess, ProgramError> {
+        let lb = LockedGuess::try_from_slice(&a.data.borrow())?;
+        Ok(lb)
+    }
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone, PartialEq, Copy)]
+pub enum Guess {
+    Zero = 0,
+    DoubleZero = 1,
+    R1 = 2,
+    B2 = 3,
+    R3 = 4,
+    B4 = 5,
+    R5 = 6,
+    B6 = 7,
+    R7 = 8,
+    B8 = 9,
+    R9 = 10,
+    B10 = 11,
+    B11 = 12,
+    R12 = 13,
+    B13 = 14,
+    R14 = 15,
+    B15 = 16,
+    R16 = 17,
+    B17 = 18,
+    R18 = 19,
+    R19 = 20,
+    B20 = 21,
+    R21 = 22,
+    B22 = 23,
+    R23 = 24,
+    B24 = 25,
+    R25 = 26,
+    B26 = 27,
+    R27 = 28,
+    B28 = 29,
+    B29 = 30,
+    R30 = 31,
+    B31 = 32,
+    R32 = 33,
+    B33 = 34,
+    R34 = 35,
+    B35 = 36,
+    R36 = 37,
+    Red = 38,
+    Black = 39,
+    Even = 40,
+    Odd = 41,
+    Col1 = 42,
+    Col2 = 43,
+    Col3 = 44,
+    Dozen1 = 45,
+    Dozen2 = 46,
+    Dozen3 = 47,
+    Low = 48,
+    High = 49,
 }
 
 pub fn is_red(number: u64) -> bool {
@@ -64,358 +136,358 @@ pub fn is_red(number: u64) -> bool {
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone, PartialEq, Copy)]
-pub struct RouletteBet {
-    pub bet: Bet,
+pub struct RouletteGuess {
+    pub guess: Guess,
     pub amount: u64,
 }
 
-impl RouletteBet {
+impl RouletteGuess {
     pub fn get_payout(&self, outcome: u64) -> u64 {
-        match self.bet {
-            Bet::Zero => {
+        match self.guess {
+            Guess::Zero => {
                 if outcome == 0 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::DoubleZero => {
+            Guess::DoubleZero => {
                 if outcome == 37 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R1 => {
+            Guess::R1 => {
                 if outcome == 1 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B2 => {
+            Guess::B2 => {
                 if outcome == 2 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R3 => {
+            Guess::R3 => {
                 if outcome == 3 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B4 => {
+            Guess::B4 => {
                 if outcome == 4 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R5 => {
+            Guess::R5 => {
                 if outcome == 5 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B6 => {
+            Guess::B6 => {
                 if outcome == 6 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R7 => {
+            Guess::R7 => {
                 if outcome == 7 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B8 => {
+            Guess::B8 => {
                 if outcome == 8 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R9 => {
+            Guess::R9 => {
                 if outcome == 9 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B10 => {
+            Guess::B10 => {
                 if outcome == 10 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B11 => {
+            Guess::B11 => {
                 if outcome == 11 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R12 => {
+            Guess::R12 => {
                 if outcome == 12 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B13 => {
+            Guess::B13 => {
                 if outcome == 13 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R14 => {
+            Guess::R14 => {
                 if outcome == 14 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B15 => {
+            Guess::B15 => {
                 if outcome == 15 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R16 => {
+            Guess::R16 => {
                 if outcome == 16 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B17 => {
+            Guess::B17 => {
                 if outcome == 17 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R18 => {
+            Guess::R18 => {
                 if outcome == 18 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R19 => {
+            Guess::R19 => {
                 if outcome == 19 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B20 => {
+            Guess::B20 => {
                 if outcome == 20 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R21 => {
+            Guess::R21 => {
                 if outcome == 21 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B22 => {
+            Guess::B22 => {
                 if outcome == 22 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R23 => {
+            Guess::R23 => {
                 if outcome == 23 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B24 => {
+            Guess::B24 => {
                 if outcome == 24 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R25 => {
+            Guess::R25 => {
                 if outcome == 25 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B26 => {
+            Guess::B26 => {
                 if outcome == 26 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R27 => {
+            Guess::R27 => {
                 if outcome == 27 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B28 => {
+            Guess::B28 => {
                 if outcome == 28 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B29 => {
+            Guess::B29 => {
                 if outcome == 29 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R30 => {
+            Guess::R30 => {
                 if outcome == 30 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B31 => {
+            Guess::B31 => {
                 if outcome == 31 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R32 => {
+            Guess::R32 => {
                 if outcome == 32 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B33 => {
+            Guess::B33 => {
                 if outcome == 33 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R34 => {
+            Guess::R34 => {
                 if outcome == 34 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::B35 => {
+            Guess::B35 => {
                 if outcome == 35 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::R36 => {
+            Guess::R36 => {
                 if outcome == 36 {
                     self.amount * 36
                 } else {
                     0
                 }
             }
-            Bet::Red => {
+            Guess::Red => {
                 if outcome != 0 && outcome != 37 && is_red(outcome) {
                     self.amount * 2
                 } else {
                     0
                 }
             }
-            Bet::Black => {
+            Guess::Black => {
                 if outcome != 0 && outcome != 37 && !is_red(outcome) {
                     self.amount * 2
                 } else {
                     0
                 }
             }
-            Bet::Even => {
+            Guess::Even => {
                 if outcome != 0 && outcome % 2 == 0 {
                     self.amount * 2
                 } else {
                     0
                 }
             }
-            Bet::Odd => {
+            Guess::Odd => {
                 if outcome != 37 && outcome % 2 == 1 {
                     self.amount * 2
                 } else {
                     0
                 }
             }
-            Bet::Col1 => {
+            Guess::Col1 => {
                 if outcome != 37 && outcome % 3 == 1 {
                     self.amount * 3
                 } else {
                     0
                 }
             }
-            Bet::Col2 => {
+            Guess::Col2 => {
                 if outcome % 3 == 2 {
                     self.amount * 3
                 } else {
                     0
                 }
             }
-            Bet::Col3 => {
+            Guess::Col3 => {
                 if outcome != 0 && outcome % 3 == 0 {
                     self.amount * 3
                 } else {
                     0
                 }
             }
-            Bet::Dozen1 => {
+            Guess::Dozen1 => {
                 if outcome > 0 && outcome <= 12 {
                     self.amount * 3
                 } else {
                     0
                 }
             }
-            Bet::Dozen2 => {
+            Guess::Dozen2 => {
                 if outcome > 12 && outcome <= 24 {
                     self.amount * 3
                 } else {
                     0
                 }
             }
-            Bet::Dozen3 => {
+            Guess::Dozen3 => {
                 if outcome > 24 && outcome < 37 {
                     self.amount * 3
                 } else {
                     0
                 }
             }
-            Bet::Low => {
+            Guess::Low => {
                 if outcome > 0 && outcome <= 18 {
                     self.amount * 2
                 } else {
                     0
                 }
             }
-            Bet::High => {
+            Guess::High => {
                 if outcome > 18 && outcome < 37 {
                     self.amount * 2
                 } else {

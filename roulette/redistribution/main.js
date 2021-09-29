@@ -17,8 +17,6 @@ function chunks(array, size) {
   );
 }
 
-const pubKeyToEntry = {};
-
 const main = async () => {
   console.log("\n");
   let beforeTx = undefined;

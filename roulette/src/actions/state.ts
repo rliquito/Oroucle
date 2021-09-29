@@ -1,60 +1,92 @@
-import { PublicKey } from '@solana/web3.js';
 import { StringPublicKey } from '../utils';
 import BN from 'bn.js'
 
 export class RNG {
-  initialized: number;
+  version: number;
   sample: BN;
   slot: BN;
   constructor(args: {
-    initialized: number;
+    version: number;
     sample: BN;
     slot: BN;
   }) {
-    this.initialized = args.initialized;
+    this.version = args.version;
     this.sample = args.sample;
     this.slot = args.slot;
   }
 }
 
 export class Honeypot {
-  initialized: number;
+  version: number;
   honeypotBumpSeed: number;
   vaultBumpSeed: number;
   owner: StringPublicKey;
   mint: StringPublicKey;
   tickSize: BN;
-  maxBetSize: BN;
+  maxAmount: BN;
   minimumBankSize: BN;
+  owedAmount: BN;
   constructor(args: {
-    initialized: number;
+    version: number;
     honeypotBumpSeed: number;
     vaultBumpSeed: number;
     owner: StringPublicKey;
     mint: StringPublicKey;
     tickSize: BN;
-    maxBetSize: BN;
+    maxAmount: BN;
     minimumBankSize: BN;
+    owedAmount: BN;
   }) {
-    this.initialized = args.initialized;
+    this.version = args.version;
     this.honeypotBumpSeed = args.honeypotBumpSeed;
     this.vaultBumpSeed = args.vaultBumpSeed;
     this.owner = args.owner;
     this.mint = args.mint;
     this.tickSize = args.tickSize;
-    this.maxBetSize = args.maxBetSize;
+    this.maxAmount = args.maxAmount;
     this.minimumBankSize = args.minimumBankSize;
+    this.owedAmount = args.owedAmount;
   }
 }
 
-export class RouletteBet {
-  bet: number;
+export class LockedGuess {
+  version: number;
+  bumpSeed: number;
+  owner: StringPublicKey;
+  vault: StringPublicKey;
+  slot: BN; 
+  reward: BN; 
+  active: number; 
+  guesses: BN[]; 
+  constructor(args: {
+    version: number;
+    bumpSeed: number;
+    owner: StringPublicKey;
+    vault: StringPublicKey;
+    slot: BN; 
+    reward: BN; 
+    active: number; 
+    guesses: BN[]; 
+  }) {
+    this.version = args.version;
+    this.bumpSeed = args.bumpSeed;
+    this.owner = args.owner;
+    this.vault = args.vault;
+    this.slot = args.slot;
+    this.reward = args.reward;
+    this.active = args.active;
+    this.guesses = args.guesses;
+  }
+}
+
+export class RouletteGuess {
+  guess: number;
   amount: BN;
   constructor(args: {
-    bet: number;
+    guess: number;
     amount: BN;
   }) {
-    this.bet = args.bet;
+    this.guess = args.guess;
     this.amount = args.amount;
   }
 }
@@ -99,15 +131,30 @@ export class WithdrawFromHoneypotArgs {
   }
 }
 
-export class RouletteArgs {
+export class InitializeGuessAccountArgs {
   instruction: number = 4;
+}
+
+export class PlaceGuessesArgs {
+  instruction: number = 5;
+  guesses: RouletteGuess[];
+  constructor(args: {
+    guesses: RouletteGuess[];
+  }) {
+    this.guesses = args.guesses;
+  }
+}
+
+export class SpinArgs {
+  instruction: number = 6;
   tolerance: BN;
-  bets: RouletteBet[];
   constructor(args: {
     tolerance: BN;
-    bets: RouletteBet[];
   }) {
     this.tolerance = args.tolerance;
-    this.bets = args.bets;
   }
+}
+
+export class TryCancelArgs {
+  instruction: number = 7;
 }

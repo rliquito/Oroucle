@@ -1,4 +1,4 @@
-use crate::state::RouletteBet;
+use crate::state::RouletteGuess;
 use borsh::{BorshDeserialize, BorshSerialize};
 
 #[repr(C)]
@@ -11,7 +11,7 @@ pub struct SampleArgs {
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
 pub struct InitializeHoneypotArgs {
     pub tick_size: u64,
-    pub max_bet_size: u64,
+    pub max_amount: u64,
     pub minimum_bank_size: u64,
 }
 
@@ -23,9 +23,14 @@ pub struct WithdrawFromHoneypotArgs {
 
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
-pub struct RouletteArgs {
+pub struct PlaceGuessArgs {
+    pub guesses: Vec<RouletteGuess>,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Debug, Clone)]
+pub struct SpinArgs {
     pub tolerance: u64,
-    pub bets: Vec<RouletteBet>,
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone)]
@@ -34,5 +39,8 @@ pub enum RandomInstruction {
     Sample(SampleArgs),
     InitializeHoneypot(InitializeHoneypotArgs),
     WithdrawFromHoneypot(WithdrawFromHoneypotArgs),
-    Roulette(RouletteArgs),
+    InitializeGuessAccount,
+    PlaceGuesses(PlaceGuessArgs),
+    Spin(SpinArgs),
+    TryCancel,
 }

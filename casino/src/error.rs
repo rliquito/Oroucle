@@ -25,3 +25,25 @@ impl From<UtilError> for ProgramError {
         ProgramError::Custom(e as u32)
     }
 }
+
+#[derive(Error, Debug, Copy, Clone)]
+pub enum RouletteError {
+    #[error("ActiveSpin")]
+    ActiveSpin,
+    #[error("Inactive")]
+    Inactive,
+    #[error("NumericalOverflow")]
+    NumericalOverflow,
+    #[error("AmountTooLarge")]
+    AmountTooLarge,
+    #[error("InvalidSlot")]
+    InvalidSlot,
+    #[error("SuspiciousTransaction")]
+    SuspiciousTransaction,
+}
+
+impl From<RouletteError> for ProgramError {
+    fn from(e: RouletteError) -> Self {
+        ProgramError::Custom(e as u32)
+    }
+}

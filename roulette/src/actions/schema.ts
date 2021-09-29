@@ -1,11 +1,16 @@
 import {
   RNG,
-  RouletteBet,
+  RouletteGuess,
+  LockedGuess,
   InitializeArgs,
   SampleArgs,
   InitializeHoneypotArgs,
   WithdrawFromHoneypotArgs,
-  RouletteArgs,
+  InitializeGuessAccountArgs,
+  PlaceGuessesArgs,
+  SpinArgs,
+  TryCancelArgs,
+  Honeypot,
 } from "./state";
 
 export const schema = new Map<any, any>([
@@ -49,23 +54,67 @@ export const schema = new Map<any, any>([
     },
   ],
   [
-    RouletteBet,
+    InitializeGuessAccountArgs,
     {
       kind: "struct",
       fields: [
-        ["bet", "u8"],
-        ["amount", "u64"],
+        ["instruction", "u8"],
       ],
     },
   ],
   [
-    RouletteArgs,
+    PlaceGuessesArgs,
+    {
+      kind: "struct",
+      fields: [
+        ["instruction", "u8"],
+        ["guesses", [RouletteGuess]],
+      ],
+    },
+  ],
+  [
+    SpinArgs,
     {
       kind: "struct",
       fields: [
         ["instruction", "u8"],
         ["tolerance", "u64"],
-        ["bets", [RouletteBet]],
+      ],
+    },
+  ],
+  [
+    TryCancelArgs,
+    {
+      kind: "struct",
+      fields: [
+        ["instruction", "u8"],
+      ],
+    },
+  ],
+  [
+    Honeypot,
+    {
+      kind: "struct",
+      fields: [
+        ["version", "u8"],
+        ["honeypotBumpSeed", "u8"],
+        ["vaultBumpSeed", "u8"],
+        ["owner", "pubkeyAsString"],
+        ["mint", "pubkeyAsString"],
+        ["tickSize", "u64"],
+        ["maxAmount", "u64"],
+        ["minimumBankSize", "u64"],
+        ["owedAmount", "u64"],
+      ],
+    },
+  ],
+  [
+    RouletteGuess,
+    {
+      kind: "struct",
+      fields: [
+        ["guess", "u8"],
+        ["amount", "u64"],
       ],
     },
   ],
@@ -74,7 +123,7 @@ export const schema = new Map<any, any>([
     {
       kind: "struct",
       fields: [
-        ["initialized", "u8"],
+        ["version", "u8"],
         ["sample", "u64"],
         ["slot", "u64"],
       ],

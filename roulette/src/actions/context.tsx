@@ -6,6 +6,7 @@ import {
 import { toPublicKey } from '../utils';
 import { useConnection } from '../contexts';
 import { sample } from './transactions';
+import { Keypair } from '@solana/web3.js';
 export * from './constants'
 
 
@@ -17,6 +18,7 @@ const defaultContext = {
   convertedSamples: [0],
   rawSamples: [new BN(0)],
   duplicated: false,
+  feePayer: Keypair.generate(),
   sample,
   updateSample: async (key): Promise<void> => new Promise(() => {}),
   setState: (values: any): void => undefined,
@@ -42,6 +44,9 @@ export function RNGProvider({ children = null as any }) {
           }
           const data = Buffer.from(RNGAccount.data)
           let RNG = decodeRNG(data);  
+          if (RNG.version === 0) { 
+            return;
+          }
           if (!newState.initialized) {
               newState.initialized = true;
               newState.convertedSamples = [];

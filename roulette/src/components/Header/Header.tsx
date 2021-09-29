@@ -35,7 +35,7 @@ const getMintString = (connection, wallet, env, ctx) => {
   let color;
   let textColor;
   const maxChips = MAX_BET_SIZE.toNumber();
-  if (env === 'devnet' && ctx.loaded && ctx.chips < maxChips) {
+  if (env === 'devnet' && ctx.loaded && ctx.chips < maxChips && !ctx.locked) {
     const remainder = maxChips - ctx.chips;
     mintString = `Mint ${remainder / TICK_SIZE.toNumber()} chips`;
     color = "lightgreen";
@@ -161,7 +161,7 @@ export const Header: React.FC = () => {
           {getMintString(connection, wallet, env, betTrackerCtx)}
         </Flex>
       </Flex>
-      {/* <Flex
+      <Flex
         height="62px"
         marginLeft="20px"
         justifyContent="flex-begin"
@@ -182,7 +182,7 @@ export const Header: React.FC = () => {
             Create Honeypot{" "}
           </Button>
         )}
-      </Flex> */}
+      </Flex>
       <Flex
         height="62px"
         minW="400px"

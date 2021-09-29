@@ -2,7 +2,9 @@ import {
   Connection,
   Keypair,
   PublicKey,
+  SystemProgram,
   TransactionInstruction,
+  TransferParams,
 } from "@solana/web3.js";
 import {
   Connection as Conn,
@@ -13,8 +15,11 @@ import {
 } from "./account";
 import {
   initializeInstruction,
-  rouletteInstruction,
+  placeGuessesInstruction,
+  spinInstruction,
+  tryCancelInstruction,
   initializeHoneypotInstruction,
+  initializeGuessAccountInstruction,
 } from "./instructions";
 import {
   notify,
@@ -44,7 +49,7 @@ import {
   MAX_BET_SIZE,
   MINIMUM_BANK_SIZE,
 } from "./constants";
-import { RouletteBet } from "./state";
+import { RouletteGuess } from "./state";
 import { BET_TO_IDX } from "./betEnum";
 import BN from "bn.js";
 import { MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -298,11 +303,12 @@ export const sample = async (
     );
     createIx = ix;
   }
-  let bets: RouletteBet[] = [];
+  let bets: RouletteGuess[] = [];
   for (let [bet, amount] of Object.entries(betTrackerCtx.state)) {
+    console.log(BET_TO_IDX[bet], amount);
     bets.push(
-      new RouletteBet({
-        bet: BET_TO_IDX[bet],
+      new RouletteGuess({
+        guess: BET_TO_IDX[bet],
         amount: new BN(amount as number),
       })
     );
@@ -318,12 +324,13 @@ export const sample = async (
     )
   )[0];
 
-  const traderHasChipAccount = await connection.getAccountInfo(
+  const hasChipAccount = await connection.getAccountInfo(
     new PublicKey(tokenAccount)
   );
 
   let createATAIx: TransactionInstruction[] = [];
-  if (!traderHasChipAccount) {
+
+  if (!hasChipAccount) {
     console.log("Creating payer AssociatedTokenAccount...");
     createAssociatedTokenAccountInstruction(
       createATAIx,
@@ -334,7 +341,7 @@ export const sample = async (
     );
   }
 
-  let [honeypotKey, _honeypotBumpSeed] = await PublicKey.findProgramAddress(
+  let honeypotKey = (await PublicKey.findProgramAddress(
     [
       Buffer.from("honeypot"),
       mintAccount.toBuffer(),
@@ -343,8 +350,8 @@ export const sample = async (
       new Uint8Array(MINIMUM_BANK_SIZE.toArray("le", 8)),
     ],
     RNG_PROGRAM_ID
-  );
-  let [vaultKey, _vaultBumpSeed] = await PublicKey.findProgramAddress(
+  ))[0];
+  let vaultKey = (await PublicKey.findProgramAddress(
     [
       Buffer.from("vault"),
       mintAccount.toBuffer(),
@@ -353,19 +360,91 @@ export const sample = async (
       new Uint8Array(MINIMUM_BANK_SIZE.toArray("le", 8)),
     ],
     RNG_PROGRAM_ID
-  );
+  ))[0];
 
   console.log(bets);
   console.log(honeypotKey.toBase58());
 
+  const guessAccount = (
+    await PublicKey.findProgramAddress(
+      [
+        Buffer.from("guess_account"),
+        wallet.publicKey.toBuffer(),
+        vaultKey.toBuffer(),
+      ],
+      RNG_PROGRAM_ID, 
+    )
+  )[0];
+
+  const hasGuessAccount = await connection.getAccountInfo(
+    new PublicKey(guessAccount)
+  );
+
+  let createGuessAccountIx: TransactionInstruction[] = [];
+  if (!hasGuessAccount) {
+    console.log("Creating guess account...");
+    let { ix } = await initializeGuessAccountInstruction(
+      mintAccount.toBase58(),
+      honeypotKey.toBase58(),
+      vaultKey.toBase58(),
+      guessAccount.toBase58(),
+      wallet,
+    );
+    createGuessAccountIx = ix;
+  }
+
+  let tryCancelIx: TransactionInstruction[] = [];
+  {
+    const { ix } = await tryCancelInstruction(
+      honeypotKey.toBase58(),
+      vaultKey.toBase58(),
+      mintAccount.toBase58(),
+      guessAccount.toBase58(),
+      tokenAccount.toBase58(),
+      wallet,
+    );
+    tryCancelIx = ix;
+  }
+
   let sampleIx: TransactionInstruction[] = [];
+  {
+    const { ix } = await placeGuessesInstruction(
+      mintAccount.toBase58(),
+      honeypotKey.toBase58(),
+      vaultKey.toBase58(),
+      guessAccount.toBase58(),
+      tokenAccount.toBase58(),
+      wallet,
+      bets
+    );
+    sampleIx = ix;
+  }
+
+  let transferIx: TransactionInstruction[] = [
+    SystemProgram.transfer({fromPubkey: wallet.publicKey, lamports: 5046, toPubkey: ctx.feePayer.publicKey})
+  ];
+
+  let response = await Conn.sendTransactionWithRetry(
+    connection,
+    wallet,
+    [...createIx, ...createGuessAccountIx, ...tryCancelIx, ...sampleIx, ...transferIx],
+    signers,
+    "max"
+  );
+  
+  if (!response) {
+    return false;
+  }
+
+  let spinIx: TransactionInstruction[] = [];
   if (env === "devnet") {
-    const { ix } = await rouletteInstruction(
+    const { ix } = await spinInstruction(
       rngAccountKey.toBase58(),
       honeypotKey.toBase58(),
       vaultKey.toBase58(),
+      mintAccount.toBase58(),
+      guessAccount.toBase58(),
       tokenAccount.toBase58(),
-      DEVNET_MINT.toBase58(),
       DEVNET_SOL_PRODUCT_ORACLE.toBase58(),
       DEVNET_SOL_PRICE_ORACLE.toBase58(),
       DEVNET_BTC_PRODUCT_ORACLE.toBase58(),
@@ -373,17 +452,17 @@ export const sample = async (
       DEVNET_ETH_PRODUCT_ORACLE.toBase58(),
       DEVNET_ETH_PRICE_ORACLE.toBase58(),
       wallet,
-      bets
     );
-    sampleIx = ix;
+    spinIx = ix;
   } else {
     console.log("Mainnet")
-    const { ix } = await rouletteInstruction(
+    const { ix } = await spinInstruction(
       rngAccountKey.toBase58(),
       honeypotKey.toBase58(),
       vaultKey.toBase58(),
+      mintAccount.toBase58(),
+      guessAccount.toBase58(),
       tokenAccount.toBase58(),
-      MAINNET_MINT.toBase58(),
       MAINNET_SOL_PRODUCT_ORACLE.toBase58(),
       MAINNET_SOL_PRICE_ORACLE.toBase58(),
       MAINNET_BTC_PRODUCT_ORACLE.toBase58(),
@@ -391,17 +470,19 @@ export const sample = async (
       MAINNET_ETH_PRODUCT_ORACLE.toBase58(),
       MAINNET_ETH_PRICE_ORACLE.toBase58(),
       wallet,
-      bets
     );
-    sampleIx = ix;
+    spinIx = ix;
   }
-
-  const response = await Conn.sendTransactionWithRetry(
+  let transferIx2: TransactionInstruction[] = [
+    SystemProgram.transfer({fromPubkey: ctx.feePayer.publicKey, lamports: 1, toPubkey: ctx.feePayer.publicKey})
+  ];
+  response = await Conn.sendTransactionWithRetry(
     connection,
     wallet,
-    [...createIx, ...sampleIx],
-    signers,
-    "max"
+    [...spinIx],
+    [ctx.feePayer],
+    "max",
+    true
   );
 
   if (!response) {
